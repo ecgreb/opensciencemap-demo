@@ -1,3 +1,15 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        mavenLocal()
+    }
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
 apply plugin: 'com.android.application'
 
 android {
@@ -11,14 +23,24 @@ android {
         versionCode 1
         versionName "1.0"
     }
+
     buildTypes {
         release {
             runProguard false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    sourceSets {
+        main {
+            jniLibs.srcDir file('jni/')
+        }
+    }
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'org.oscim:vtm:0.5.9-SNAPSHOT'
+    compile 'org.oscim:vtm-android:0.5.9-SNAPSHOT@aar'
+    compile 'com.squareup.okhttp:okhttp:1.5.2'
+    compile 'com.android.support:support-v4:+'
 }
