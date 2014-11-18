@@ -5,7 +5,13 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 
+import com.mapzen.android.Pelias;
+import com.mapzen.android.gson.Feature;
+import com.mapzen.android.gson.Result;
 import com.mapzen.android.lost.LocationClient;
 import com.mapzen.android.lost.LocationListener;
 import com.mapzen.android.lost.LocationRequest;
@@ -25,6 +31,11 @@ import org.oscim.tiling.source.oscimap4.OSciMap4TileSource;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.List;
+
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 public class OpenScienceMapActivity extends MapActivity {
 
@@ -74,17 +85,53 @@ public class OpenScienceMapActivity extends MapActivity {
                 });
 
         locationClient.connect();
+        addMarkerLayer();
 //        trackMeBro();
+
+        final TextView search = (TextView) findViewById(R.id.search_box);
+        final Button submit = (Button) findViewById(R.id.submit_button);
+        submit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Location location = locationClient.getLastLocation();
+                String lat = Double.toString(location.getLatitude());
+                String lng = Double.toString(location.getLongitude());
+
+                Pelias.getPelias().suggest(search.getText().toString(), lat, lng, new Callback<Result>() {
+                    @Override
+                    public void success(Result result, Response response) {
+                        List<Feature> features = result.getFeatures();
+
+                        if (features.isEmpty()) {
+                            Log.d("Pelias", "no results");
+                            return;
+                        }
+
+                        for (Feature feature : features) {
+                            Log.d("Pelias", feature.getProperties().getText());
+                        }
+                    }
+
+                    @Override
+                    public void failure(RetrofitError error) {
+                        Log.e("Pelias", "oh crap");
+                    }
+                });
+            }
+        });
     }
 
     private void trackMeBro() {
+        locationClient.setMockMode(true);
+        locationClient.setMockTrace("ymca.gpx");
+    }
+
+    private void addMarkerLayer() {
         ArrayList<MarkerItem> markers = new ArrayList<MarkerItem>(1);
         locationMarkerLayer = new ItemizedLayer<MarkerItem>(map(),
                 markers, AndroidGraphics.makeMarker(getResources()
                 .getDrawable(R.drawable.ic_locate_me), MarkerItem.HotspotPlace.CENTER), null);
         map().layers().add(locationMarkerLayer);
-        locationClient.setMockMode(true);
-        locationClient.setMockTrace("ymca.gpx");
     }
 
     private MarkerItem getUserLocationMarker(Location location) {
