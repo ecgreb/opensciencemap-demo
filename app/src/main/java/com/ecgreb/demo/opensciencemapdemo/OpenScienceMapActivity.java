@@ -11,7 +11,12 @@ import com.mapzen.android.lost.LocationListener;
 import com.mapzen.android.lost.LocationRequest;
 
 import org.oscim.android.MapActivity;
+import org.oscim.android.canvas.AndroidGraphics;
 import org.oscim.backend.AssetAdapter;
+import org.oscim.core.GeoPoint;
+import org.oscim.layers.marker.ItemizedLayer;
+import org.oscim.layers.marker.MarkerItem;
+import org.oscim.layers.marker.MarkerSymbol;
 import org.oscim.layers.tile.buildings.BuildingLayer;
 import org.oscim.layers.tile.vector.VectorTileLayer;
 import org.oscim.layers.tile.vector.labeling.LabelLayer;
@@ -19,10 +24,13 @@ import org.oscim.theme.ThemeFile;
 import org.oscim.tiling.source.oscimap4.OSciMap4TileSource;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 
 public class OpenScienceMapActivity extends MapActivity {
 
     private LocationClient locationClient;
+    private ItemizedLayer<MarkerItem> locationMarkerLayer;
+    private ArrayList<MarkerItem> markerItems;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +58,11 @@ public class OpenScienceMapActivity extends MapActivity {
                                     @Override
                                     public void onLocationChanged(Location location) {
                                         setMapPosition(location);
+                                        if (locationMarkerLayer != null) {
+                                            locationMarkerLayer.removeAllItems();
+                                            locationMarkerLayer.addItem(getUserLocationMarker(location));
+                                        }
+
                                         Log.d("OpenScienceMapDemo", location.toString());
                                     }
                                 });
@@ -61,6 +74,29 @@ public class OpenScienceMapActivity extends MapActivity {
                 });
 
         locationClient.connect();
+//        trackMeBro();
+    }
+
+    private void trackMeBro() {
+        ArrayList<MarkerItem> markers = new ArrayList<MarkerItem>(1);
+        locationMarkerLayer = new ItemizedLayer<MarkerItem>(map(),
+                markers, AndroidGraphics.makeMarker(getResources()
+                .getDrawable(R.drawable.ic_locate_me), MarkerItem.HotspotPlace.CENTER), null);
+        map().layers().add(locationMarkerLayer);
+        locationClient.setMockMode(true);
+        locationClient.setMockTrace("ymca.gpx");
+    }
+
+    private MarkerItem getUserLocationMarker(Location location) {
+        MarkerItem markerItem = new MarkerItem("Me", "current location",
+                new GeoPoint(location.getLatitude(), location.getLongitude()));
+
+        MarkerSymbol symbol = AndroidGraphics.makeMarker(
+                getResources().getDrawable(R.drawable.ic_locate_me),
+                MarkerItem.HotspotPlace.CENTER);
+
+        markerItem.setMarker(symbol);
+        return markerItem;
     }
 
     private void setMapPosition(Location location) {
