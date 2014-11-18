@@ -1,8 +1,14 @@
 package com.ecgreb.demo.opensciencemapdemo;
 
+import android.location.Location;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+
+import com.mapzen.android.lost.LocationClient;
+import com.mapzen.android.lost.LocationListener;
+import com.mapzen.android.lost.LocationRequest;
 
 import org.oscim.android.MapActivity;
 import org.oscim.backend.AssetAdapter;
@@ -16,6 +22,8 @@ import java.io.InputStream;
 
 public class OpenScienceMapActivity extends MapActivity {
 
+    private LocationClient locationClient;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -25,6 +33,40 @@ public class OpenScienceMapActivity extends MapActivity {
         map().layers().add(new BuildingLayer(map(), baseLayer));
         map().layers().add(new LabelLayer(map(), baseLayer));
         map().setTheme(Theme.DEFAULT);
+
+        locationClient = new LocationClient(this,
+                new LocationClient.ConnectionCallbacks() {
+                    @Override
+                    public void onConnected(Bundle connectionHint) {
+                        Location lastLocation = locationClient.getLastLocation();
+                        if (lastLocation != null) {
+                            setMapPosition(lastLocation);
+                        }
+
+                        LocationRequest locationRequest = LocationRequest.create();
+                        locationRequest.setInterval(1000);
+                        locationClient.requestLocationUpdates(locationRequest,
+                                new LocationListener() {
+                                    @Override
+                                    public void onLocationChanged(Location location) {
+                                        setMapPosition(location);
+                                        Log.d("OpenScienceMapDemo", location.toString());
+                                    }
+                                });
+                    }
+
+                    @Override
+                    public void onDisconnected() {
+                    }
+                });
+
+        locationClient.connect();
+    }
+
+    private void setMapPosition(Location location) {
+        map().setMapPosition(location.getLatitude(), location.getLongitude(),
+                Math.pow(2, map().getMapPosition().getZoomLevel()));
+        map().updateMap(true);
     }
 
     @Override
