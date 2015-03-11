@@ -45,4 +45,6 @@ dependencies {
     compile 'com.android.support:support-v4:+'
     compile 'com.mapzen.android:lost:0.2'
     compile 'com.mapzen.android:pelias-android-sdk:0.3.1'
+    compile 'com.mapzen:on-the-road:0.5@aar'
+    compile 'com.google.guava:guava:18.0'
 }
