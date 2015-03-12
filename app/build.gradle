@@ -8,6 +8,9 @@ buildscript {
 repositories {
     mavenCentral()
     mavenLocal()
+  flatDir {
+    dirs 'libs'
+  }
 }
 
 apply plugin: 'com.android.application'
