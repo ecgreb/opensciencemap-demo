@@ -25,12 +25,4 @@
         android:layout_below="@id/search_box"
         android:text="Submit" />
 
-    <Button
-        android:id="@+id/route_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/search_box"
-        android:layout_toRightOf="@id/submit_button"
-        android:text="Route" />
-
 </RelativeLayout>

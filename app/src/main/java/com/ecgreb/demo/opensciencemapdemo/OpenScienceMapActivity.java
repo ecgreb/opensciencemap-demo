@@ -15,9 +15,6 @@ import com.mapzen.android.gson.Result;
 import com.mapzen.android.lost.LocationClient;
 import com.mapzen.android.lost.LocationListener;
 import com.mapzen.android.lost.LocationRequest;
-import com.mapzen.osrm.Instruction;
-import com.mapzen.osrm.Route;
-import com.mapzen.osrm.Router;
 
 import org.oscim.android.MapActivity;
 import org.oscim.android.canvas.AndroidGraphics;
@@ -89,7 +86,7 @@ public class OpenScienceMapActivity extends MapActivity {
 
         locationClient.connect();
         addMarkerLayer();
-//        trackMeBro();
+//      trackMeBro();
 
         final TextView search = (TextView) findViewById(R.id.search_box);
         final Button submit = (Button) findViewById(R.id.submit_button);
@@ -120,33 +117,6 @@ public class OpenScienceMapActivity extends MapActivity {
                         Log.e("Pelias", "oh crap");
                     }
                 });
-            }
-        });
-
-        final Button route = (Button) findViewById(R.id.route_button);
-        route.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Location location = locationClient.getLastLocation();
-                Router.getRouter()
-                        .setDriving()
-                        .setLocation(new double[]{ location.getLatitude(), location.getLongitude()})
-                        .setLocation(new double[]{ 37.8197, -122.4786}) // Golden Gate Bridge
-                        .setCallback(new Router.Callback() {
-                            @Override
-                            public void success(Route route) {
-                                List<Instruction> instructions = route.getRouteInstructions();
-                                for (Instruction instruction : instructions) {
-                                    Log.d("OnTheRoad", instruction.getFullInstruction(
-                                            OpenScienceMapActivity.this));
-                                }
-                            }
-
-                            @Override
-                            public void failure(int i) {
-                                Log.e("OnTheRoad", "oh crap");
-                            }
-                        }).fetch();
             }
         });
     }
