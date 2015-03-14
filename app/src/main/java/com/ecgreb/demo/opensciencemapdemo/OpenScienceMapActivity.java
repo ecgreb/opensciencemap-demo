@@ -2,6 +2,7 @@ package com.ecgreb.demo.opensciencemapdemo;
 
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -22,6 +23,7 @@ import org.oscim.android.MapActivity;
 import org.oscim.android.canvas.AndroidGraphics;
 import org.oscim.backend.AssetAdapter;
 import org.oscim.core.GeoPoint;
+import org.oscim.core.MapPosition;
 import org.oscim.layers.marker.ItemizedLayer;
 import org.oscim.layers.marker.MarkerItem;
 import org.oscim.layers.marker.MarkerSymbol;
@@ -61,11 +63,13 @@ public class OpenScienceMapActivity extends MapActivity {
 
         Location lastLocation = locationClient.getLastLocation();
         if (lastLocation != null) {
-            setMapPosition(lastLocation);
+            setMapPositionWithZoom(lastLocation);
         }
 
+        //trackMeBro();
+
         LocationRequest locationRequest = LocationRequest.create();
-        locationRequest.setInterval(1000);
+        locationRequest.setInterval(200);
         locationClient.requestLocationUpdates(locationRequest,
                 new LocationListener() {
                     @Override
@@ -81,7 +85,6 @@ public class OpenScienceMapActivity extends MapActivity {
                 });
 
         addMarkerLayer();
-//      trackMeBro();
 
         final TextView search = (TextView) findViewById(R.id.search_box);
         final Button submit = (Button) findViewById(R.id.submit_button);
@@ -115,11 +118,27 @@ public class OpenScienceMapActivity extends MapActivity {
                         });
             }
         });
+
+        final Button findMe = (Button) findViewById(R.id.find_me);
+        findMe.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (locationClient.getLastLocation() != null) {
+                    centerOn(locationClient.getLastLocation());
+                }
+            }
+        });
+    }
+
+    private void centerOn(Location location) {
+        GeoPoint point = new GeoPoint(location.getLatitude(), location.getLongitude());
+        map().animator().animateTo(point);
     }
 
     private void trackMeBro() {
         locationClient.setMockMode(true);
-        locationClient.setMockTrace(new File(getExternalFilesDir(null), "ymca.gpx"));
+        locationClient.setMockTrace(new File(Environment.getExternalStorageDirectory(),
+                "ymca.gpx"));
     }
 
     private void addMarkerLayer() {
@@ -143,6 +162,13 @@ public class OpenScienceMapActivity extends MapActivity {
     }
 
     private void setMapPosition(Location location) {
+        MapPosition mapPosition = map().getMapPosition();
+        mapPosition.setPosition(location.getLatitude(), location.getLongitude());
+        map().setMapPosition(mapPosition);
+        map().updateMap(true);
+    }
+
+    private void setMapPositionWithZoom(Location location) {
         map().setMapPosition(location.getLatitude(), location.getLongitude(),
                 Math.pow(2, map().getMapPosition().getZoomLevel()));
         map().updateMap(true);

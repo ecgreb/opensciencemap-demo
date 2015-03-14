@@ -21,4 +21,12 @@
         android:layout_below="@id/search_box"
         android:text="@string/submit" />
 
+    <Button
+        android:id="@+id/find_me"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/search_box"
+        android:layout_toRightOf="@id/submit_button"
+        android:text="@string/find_me" />
+
 </RelativeLayout>
