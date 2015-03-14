@@ -12,9 +12,11 @@ import android.widget.TextView;
 import com.mapzen.android.Pelias;
 import com.mapzen.android.gson.Feature;
 import com.mapzen.android.gson.Result;
-import com.mapzen.android.lost.LocationClient;
-import com.mapzen.android.lost.LocationListener;
-import com.mapzen.android.lost.LocationRequest;
+import com.mapzen.android.lost.api.FusedLocationProviderApi;
+import com.mapzen.android.lost.api.LocationListener;
+import com.mapzen.android.lost.api.LocationRequest;
+import com.mapzen.android.lost.api.LocationServices;
+import com.mapzen.android.lost.api.LostApiClient;
 
 import org.oscim.android.MapActivity;
 import org.oscim.android.canvas.AndroidGraphics;
@@ -29,6 +31,7 @@ import org.oscim.layers.tile.vector.labeling.LabelLayer;
 import org.oscim.theme.ThemeFile;
 import org.oscim.tiling.source.oscimap4.OSciMap4TileSource;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +42,7 @@ import retrofit.client.Response;
 
 public class OpenScienceMapActivity extends MapActivity {
 
-    private LocationClient locationClient;
+    private FusedLocationProviderApi locationClient;
     private ItemizedLayer<MarkerItem> locationMarkerLayer;
     private ArrayList<MarkerItem> markerItems;
 
@@ -53,38 +56,30 @@ public class OpenScienceMapActivity extends MapActivity {
         map().layers().add(new LabelLayer(map(), baseLayer));
         map().setTheme(Theme.DEFAULT);
 
-        locationClient = new LocationClient(this,
-                new LocationClient.ConnectionCallbacks() {
+        new LostApiClient.Builder(this).build().connect();
+        locationClient = LocationServices.FusedLocationApi;
+
+        Location lastLocation = locationClient.getLastLocation();
+        if (lastLocation != null) {
+            setMapPosition(lastLocation);
+        }
+
+        LocationRequest locationRequest = LocationRequest.create();
+        locationRequest.setInterval(1000);
+        locationClient.requestLocationUpdates(locationRequest,
+                new LocationListener() {
                     @Override
-                    public void onConnected(Bundle connectionHint) {
-                        Location lastLocation = locationClient.getLastLocation();
-                        if (lastLocation != null) {
-                            setMapPosition(lastLocation);
+                    public void onLocationChanged(Location location) {
+                        setMapPosition(location);
+                        if (locationMarkerLayer != null) {
+                            locationMarkerLayer.removeAllItems();
+                            locationMarkerLayer.addItem(getUserLocationMarker(location));
                         }
 
-                        LocationRequest locationRequest = LocationRequest.create();
-                        locationRequest.setInterval(1000);
-                        locationClient.requestLocationUpdates(locationRequest,
-                                new LocationListener() {
-                                    @Override
-                                    public void onLocationChanged(Location location) {
-                                        setMapPosition(location);
-                                        if (locationMarkerLayer != null) {
-                                            locationMarkerLayer.removeAllItems();
-                                            locationMarkerLayer.addItem(getUserLocationMarker(location));
-                                        }
-
-                                        Log.d("OpenScienceMapDemo", location.toString());
-                                    }
-                                });
-                    }
-
-                    @Override
-                    public void onDisconnected() {
+                        Log.d("OpenScienceMapDemo", location.toString());
                     }
                 });
 
-        locationClient.connect();
         addMarkerLayer();
 //      trackMeBro();
 
@@ -97,33 +92,34 @@ public class OpenScienceMapActivity extends MapActivity {
                 String lat = Double.toString(location.getLatitude());
                 String lng = Double.toString(location.getLongitude());
 
-                Pelias.getPelias().suggest(search.getText().toString(), lat, lng, new Callback<Result>() {
-                    @Override
-                    public void success(Result result, Response response) {
-                        List<Feature> features = result.getFeatures();
+                Pelias.getPelias()
+                        .suggest(search.getText().toString(), lat, lng, new Callback<Result>() {
+                            @Override
+                            public void success(Result result, Response response) {
+                                List<Feature> features = result.getFeatures();
 
-                        if (features.isEmpty()) {
-                            Log.d("Pelias", "no results");
-                            return;
-                        }
+                                if (features.isEmpty()) {
+                                    Log.d("Pelias", "no results");
+                                    return;
+                                }
 
-                        for (Feature feature : features) {
-                            Log.d("Pelias", feature.getProperties().getText());
-                        }
-                    }
+                                for (Feature feature : features) {
+                                    Log.d("Pelias", feature.getProperties().getText());
+                                }
+                            }
 
-                    @Override
-                    public void failure(RetrofitError error) {
-                        Log.e("Pelias", "oh crap");
-                    }
-                });
+                            @Override
+                            public void failure(RetrofitError error) {
+                                Log.e("Pelias", "oh crap");
+                            }
+                        });
             }
         });
     }
 
     private void trackMeBro() {
         locationClient.setMockMode(true);
-        locationClient.setMockTrace("ymca.gpx");
+        locationClient.setMockTrace(new File(getExternalFilesDir(null), "ymca.gpx"));
     }
 
     private void addMarkerLayer() {

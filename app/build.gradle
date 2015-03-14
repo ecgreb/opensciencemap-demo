@@ -46,7 +46,7 @@ dependencies {
     compile 'org.oscim:vtm-android:0.5.9-SNAPSHOT@aar'
     compile 'com.squareup.okhttp:okhttp:1.5.2'
     compile 'com.android.support:support-v4:+'
-    compile 'com.mapzen.android:lost:0.2'
+    compile 'com.mapzen.android:lost:1.0.0'
     compile 'com.mapzen.android:pelias-android-sdk:0.3.1'
     compile 'com.google.guava:guava:18.0'
 }
